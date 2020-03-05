@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>WEATHER APP</title>
+  <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css'>
+<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.2.3/animate.min.css'><link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<html>
+
+<head>
+  <title>Simple Weather</title>
+  <!--Fonts-->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+  <!---Materialize CSS-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/css/materialize.min.css">
+  <link href="../css/style1.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+  
+  <div class="container">
+    <div class="toggle-container">
+        <input type="checkbox" id="switch" name="theme" /><label for="switch">Toggle</label>
+    </div>
+  </div>
+
+  <div class="container text-center">
+<!--     -Title
+    <h1 id="heading">Weather</h1> -->
+    <!---Search Bar--->
+    <div id="search-wrapper">
+      <form id="searchbar">
+        <div class="row">
+          <div class="input-group">
+            <input type="text" class="form-control text-center" id = "city-input" placeholder="Enter a City">
+            <span class="input-group-btn">
+                <button class="btn" type="button" id = "search-btn">
+                  <i class = "fa fa-search">
+                  </i>
+                </button>
+              </span>
+            <!-- /input-group -->
+          </div>
+          <div id = temp-control class = "pull-right">
+            <span id = "cel">°C</span>/<span id = "far">°F</span> 
+          </div>
+          <!--row-->
+        </div>
+      </form>
+      <!--search-wrapper-->
+    </div>
+    
+    <!----Weather information-->
+    <div id = "weather-info" class = "text-center">
+        <!--Location-->
+        <div class = "row card" id = "header-info">
+          <div class = "first-row col s6" id="location"> 
+          </div>
+         <!--Current Temperature-->
+          <div class = "first-row col s6  offset-s3" id = "current-temp">
+            <div id = "curr-temp"></div>
+            <img id = "curr-icon">
+          </div>
+      </div>
+       <!--5 day forecast-->
+      <div class = "row text-center" id = "forecast">
+        <div class = "forecast-days card">  
+          <div id = "day1-date"></div>
+          <div id = "day1-temp"></div>
+          <img id = day1-icon>
+        </div>
+        <div class = "forecast-days card">
+          <div id = "day2-date"></div>
+          <div id = "day2-temp"></div>
+          <img id = day2-icon>
+        </div>
+        <div class = "forecast-days card">  
+          <div id = "day3-date"></div>
+          <div id = "day3-temp"></div>
+          <img id = day3-icon>
+        </div>
+         <div class = "forecast-days card"> 
+           <div id = "day4-date"></div>
+          <div id = "day4-temp"></div>
+          <img id = day4-icon>
+        </div>
+        <div class = "forecast-days card">  
+          <div id = "day5-date"></div>
+          <div id = "day5-temp"></div>
+          <img id = day5-icon>
+        </div>
+      </div>
+      
+      <div id="inputbutton">
+    
+      </div>
+      <!--Weather Info div-->
+    </div>
+    
+  <!--End of container div-->
+  </div>
+
+  <div id="btn">
+    <!--input type="submit" value="Back" class="Back" onclick="window.location.href='/home'"-->
+    <input type="submit" value="Logout" class="Logout" onclick="window.location.href='/logout'">
+    <input type="submit" value="Afficher" class="Afficher" onclick="window.location.href='/home/afficher'">
+  </div>
+
+</body>
+
+</html>
+<!-- partial -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script><script  src="./script.js"></script>
+  <script>
+  
+      var checkbox = document.querySelector('input[name=theme]');
+
+    checkbox.addEventListener('change', function() {
+        if(this.checked) {
+            trans()
+            document.documentElement.setAttribute('data-theme', 'dark')
+        } else {
+            trans()
+            document.documentElement.setAttribute('data-theme', 'light')
+        }
+    })
+
+    let trans = () => {
+        document.documentElement.classList.add('transition');
+        window.setTimeout(() => {
+            document.documentElement.classList.remove('transition')
+        }, 1000)
+    }
+
+
+    $(document).ready(function() {
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //Variable declarations
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    var lat = 0;
+    var lon = 0;
+    var suffix = "°C"
+    var inputCity;
+    var mode = "coords"; //Specify if calling the API with coords or city
+    var datetime = ""; //Holds date for 5day forecast
+    var dateCount = 0; //5day forecast date index tracker
+    var dateElement = ""; //5day forecast html element name variable
+
+    //Holds running sum of temperatures + number of temps summed up
+    var forecastDayTemp = 0;
+    var forecastDayCount = 0;
+
+    var APIKEY = "e7a1bbd88fc3dd213f775e602b2f7da9";
+    var URL = "http://api.openweathermap.org/data/2.5/weather?";
+    var imgsrc = "http://openweathermap.org/img/w/"
+    var data; //Holds response from OpenWeather
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //Function declarations
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    //Obtaining geolocation data from browser 
+    function getLocation() {
+    mode = "coords";
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+      lat = String(position.coords.latitude);
+      lon = String(position.coords.longitude);
+      getWeather([lat,lon],mode); 
+      });
+    }
+    }
+    //+++++++++++++++++++++++++++++++++
+    //API call to OpenWeather 
+    function getWeather(input,mode) {
+    var xhr = new XMLHttpRequest();
+    var forecast = new XMLHttpRequest();
+    //Getting weather by city
+    if (mode == "city") {
+      xhr.open("GET","http://api.openweathermap.org/data/2.5/weather?q="+ input +"&units=metric&APPID="+APIKEY,false);
+      xhr.send();
+      
+      forecast.open("GET","http://api.openweathermap.org/data/2.5/forecast?q=" + input +"&units=metric&APPID="+APIKEY,false);
+      forecast.send();
+    }
+    //Getting weather by latitude and longitude
+    else if (mode == "coords") {
+      xhr.open("GET","http://api.openweathermap.org/data/2.5/weather?lat="+input[0]+"&lon="+input[1]+"&units=metric&APPID="+APIKEY,false);
+      xhr.send(); 
+      
+      forecast.open("GET","http://api.openweathermap.org/data/2.5/forecast?lat=" + input[0]+"&lon="+input[1]+"&units=metric&APPID="+APIKEY,false);
+      forecast.send();
+      
+    }      
+    //Parse JSON data
+    data = JSON.parse(xhr.response);
+    updateDisplay(data);
+    updateForecast(JSON.parse(forecast.response));
+    }
+    //+++++++++++++++++++++++++++++++++++
+    //Update current temperature with response data 
+    function updateDisplay(city) {
+    var html = "";
+    $("#location").text(city.name);   
+    $("#curr-temp").text(Math.floor(city.main.temp) + suffix);
+    //Getting weather icon
+    html+= imgsrc + city.weather[0].icon +".png";
+    document.getElementById("curr-icon").src = html;
+    }
+    //Update 5 day forecast with response data 
+    function updateForecast(days) {
+    datetime = 0;
+    dateCount = 0;
+    var iconHTML =  ""
+    //Iterate through each time stamp and aggreagate data into the five days
+    for (var i = 0; i < days.list.length; i++) {
+      //Get the date
+      if (days.list[i].dt_txt.slice(0,10) != datetime) {
+        forecastDayTemp = 0;
+        forecastDayCount = 0;
+        dateCount++;
+        datetime = days.list[i].dt_txt.slice(0,10);
+        dateElement = "#day"+dateCount+"-date";
+        $(dateElement).text(getDay(datetime));
+        //Aggregate temperature for the date
+        for (var j = 0; j < days.list.length; j++) {
+          if (datetime == days.list[j].dt_txt.slice(0,10)) {
+            forecastDayTemp += days.list[j].main.temp;
+            forecastDayCount++;
+          }
+        }
+        forecastDayTemp = Math.floor(forecastDayTemp / forecastDayCount);
+        $("#day"+dateCount+"-temp").text(forecastDayTemp+suffix);
+        //Getting weather icon
+        iconHTML = imgsrc + days.list[i].weather[0].icon +".png";
+        document.getElementById("day"+dateCount+"-icon").src = iconHTML;
+      }
+    }
+
+    }
+    //Convert datetime string to day of the week
+    function getDay(dateString) {
+    var week = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return week[new Date(dateString).getDay()];
+    }
+    //Convert Celsius to Fahrenheit and vice versa
+    function getTempFormat(input,degree) {
+    if (degree == "°F") {
+      return Math.ceil((input*1.8) + 32);
+    }
+    if (degree == "°C") {
+      return Math.floor((input-32) * (5.0/9.0));
+    }
+    }
+
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //Function calls + JQuery events 
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+    //Get location from browser   
+    getLocation();
+
+    //Default temperature format is celsius
+    $("#cel").css("font-weight","bold");
+    
+    //Toggle between celsius and fahrenheit
+    $("#temp-control").click(function() {
+    var temp;
+    if (suffix == "°C") {
+      suffix = "°F";
+      $("#cel").css("font-weight","normal");
+      $("#far").css("font-weight","bold");
+    }
+    else if (suffix == "°F") {
+    suffix = "°C";
+    $("#cel").css("font-weight","bold");
+    $("#far").css("font-weight","normal");
+    }
+    temp = getTempFormat($("#curr-temp").text().split("°")[0],suffix); 
+    $("#curr-temp").text(temp + suffix);
+    for (dateCount = 1; dateCount < 6; dateCount++) {
+    temp = getTempFormat($("#day"+dateCount+"-temp").text().split("°")[0],suffix);
+    $("#day"+dateCount+"-temp").text(temp + suffix);
+    }
+
+    })
+
+    
+    
+    //Get weather of inputted city
+    $("#search-btn").click(function() {
+    mode = "city";
+    inputCity = document.getElementById("city-input").value;
+    console.log(inputCity);
+    $('#inputbutton').html($('#inputbutton').html()+'<button><a href="/home/save/' + inputCity + '">Save</a></button>');
+    getWeather(inputCity,mode);
+      
+    })
+    
+    
+  
+
+    // $("#city-input").keypress(function(event) {
+    //   if (event.which == 13) {
+    //     inputCity = document.getElementById("city-input").value;
+    //     $("#search-btn").click();
+    //     return false;
+    //   }
+    // })
+
+    //Will fix GPS Browser load later, hardcode as melbourne on load for now..
+    //getWeather("Casablanca, Maroc","city");
+
+    });
+  
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,15 @@
+<link href="../css/style1.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<% for(i=0; i < locals.djadja.length; i++){ %>
+    <div class="grid-container" style="grid-auto-flow: row;">
+        <div class="item1">
+            villename: <%= locals.djadja[i].villename; %><br>
+            temperature: <%= locals.djadja[i].temperature; %>°C <br>
+            etat: <%= locals.djadja[i].etat; %><br>
+            <button class="supprimer" onclick="window.location.href='/home/<%= locals.djadja[i].villename; %>' + '/delete'"><i class="fa fa-trash"></i></button>
+        </div><br> 
+    </div>  
+
+<% } %>
+<input type="submit" value="Back" class="Back" onclick="window.location.href='/home/cityadd'">
